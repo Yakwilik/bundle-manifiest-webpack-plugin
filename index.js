@@ -1,33 +1,47 @@
-class FileListPlugin {
+const fs = require('fs');
+const path = require('path');
+const { RawSource } = require('webpack').sources;
+const { Compilation } = require('webpack');
+
+class BundleManifiestWebpackPlugin {
+    constructor(options) {
+        this.swFilename = options.swFilename;  // относительный путь до файла сервисного воркера
+        this.outputFilename = options.outputFilename || 'serviceWorker.js';  // имя файла для сохранения
+    }
+
     apply(compiler) {
-        // Эмит событий, включенных в жизненный цикл компиляции
-        compiler.hooks.emit.tapAsync('FileListPlugin', (compilation, callback) => {
-            // Создание объекта для хранения списка файлов
-            let fileList = {};
-
-            // Перебираем все созданные файлы в процессе сборки
-            for (let filename in compilation.assets) {
-                // Добавляем каждый файл в объект fileList
-                fileList[filename] = true;
-            }
-
-            // Превращаем объект fileList в строку JSON
-            fileList = JSON.stringify(fileList, null, 2);
-
-            // Добавляем fileList в компиляцию с помощью Webpack для вывода
-            compilation.assets['filelist.json'] = {
-                source: function() {
-                    return fileList;
+        compiler.hooks.thisCompilation.tap('GenerateSW', (compilation) => {
+            compilation.hooks.processAssets.tapAsync(
+                {
+                    name: 'GenerateSW',
+                    stage: Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL,
                 },
-                size: function() {
-                    return fileList.length;
-                }
-            };
+                (assets, callback) => {
+                    let assetNames = Object.keys(assets);
 
-            // Завершаем плагин
-            callback();
+                    let assetList = assetNames.map((filename) => `'${filename}'`);
+
+                    let swPath = path.join(compiler.options.context, this.swFilename);
+
+                    fs.readFile(swPath, 'utf8', (err, data) => {
+                        if (err) {
+                            return callback(err);
+                        }
+
+                        let swSource = new RawSource(`self.__BMWP_MANIFEST = [${assetList.join(",")}];${data}`);
+
+                        if (compilation.getAsset(this.outputFilename)) {
+                            compilation.updateAsset(this.outputFilename, swSource);
+                        } else {
+                            compilation.emitAsset(this.outputFilename, swSource);
+                        }
+
+                        callback();
+                    });
+                }
+            );
         });
     }
 }
 
-module.exports = FileListPlugin;
+module.exports = BundleManifiestWebpackPlugin;

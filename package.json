@@ -1,6 +1,6 @@
 {
   "name": "bundle-manifiest-webpack-plugin",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Плагин для Webpack, который собирает в файл информацию о собранных файлах.",
   "main": "index.js",
   "scripts": {
@@ -16,5 +16,8 @@
     "bundle"
   ],
   "author": "yakwilik",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "webpack": "^5.84.1"
+  }
 }
