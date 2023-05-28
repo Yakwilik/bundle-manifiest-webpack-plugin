@@ -14,7 +14,7 @@ class BundleManifiestWebpackPlugin {
             compilation.hooks.processAssets.tapAsync(
                 {
                     name: 'GenerateSW',
-                    stage: Compilation.PROCESS_ASSETS_STAGE_ADDITIONAL,
+                    stage: Compilation.PROCESS_ASSETS_STAGE_REPORT,
                 },
                 (assets, callback) => {
                     let assetNames = Object.keys(assets);
